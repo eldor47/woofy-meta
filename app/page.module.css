@@ -7,6 +7,10 @@
   min-height: 100vh;
 }
 
+.anchor {
+  color: red;
+}
+
 .description {
   display: inherit;
   justify-content: inherit;
