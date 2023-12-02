@@ -183285,16 +183285,6 @@ const Home = () => {
           "value": "Grin Wide"
         }
       ]
-    },
-    {
-      "name": "Woofy Capsule",
-      "image": "https://static.cozyverse.xyz/woofys/images/00000.gif",
-      "attributes": [
-        {
-          "trait_type": "State",
-          "value": "Unrevealed"
-        }
-      ]
     }
   ]
   const [currentPage, setCurrentPage] = useState(1);
