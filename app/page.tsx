@@ -5,6 +5,20 @@ import { useEffect, useState } from 'react';
 const Home = () => {
   const JSONData = [
     {
+      "name": "Ziggy",
+      "image": "https://static.cozyverse.xyz/woofys/images/00003.png",
+      "attributes": [
+        {
+          "trait_type": "Pack",
+          "value": "Ziggy"
+        },
+        {
+          "trait_type": "Pack Leader",
+          "value": "Ziggy"
+        }
+      ]
+    },
+    {
       "name": "Ace",
       "image": "https://static.cozyverse.xyz/woofys/images/00002.png",
       "attributes": [
@@ -183279,20 +183293,6 @@ const Home = () => {
         {
           "trait_type": "State",
           "value": "Unrevealed"
-        }
-      ]
-    },
-    {
-      "name": "Ziggy",
-      "image": "https://static.cozyverse.xyz/woofys/images/00003.png",
-      "attributes": [
-        {
-          "trait_type": "Pack",
-          "value": "Ziggy"
-        },
-        {
-          "trait_type": "Pack Leader",
-          "value": "Ziggy"
         }
       ]
     }
