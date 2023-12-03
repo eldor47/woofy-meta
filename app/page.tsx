@@ -183319,7 +183319,7 @@ const Home = () => {
         item.attributes
           .filter((attribute) => attribute.trait_type === selectedTraitType)
           .map((attribute) => attribute.value)
-      )
+      ).sort()
     )
   );
 
@@ -183332,6 +183332,7 @@ const Home = () => {
       const filtered = JSONData.filter((item) =>
         item.attributes.some((attr) => attr.trait_type === traitType)
       );
+      debugger;
       setFilteredData(filtered);
       setCurrentItems(filtered.slice(indexOfFirstItem, indexOfLastItem))
       setCurrentPage(1)
@@ -183363,20 +183364,26 @@ const Home = () => {
     }
   };
 
+  const dropdownStyle = { 
+    height: '35px',
+    backgroundColor: 'whitesmoke',
+    color: 'black',
+    border: 'none',
+    borderRadius: '5px',
+    fontSize: '18px'
+  }
+
   return (
     <div>
-      <div style={{display: 'flex', justifyContent: 'center'}}>
-        <h1>Woofy Image Data Searcher</h1>
+      <div style={{display: 'flex', justifyContent: 'center', marginTop: '10px', fontSize: '30px', fontWeight: 'bold'}}>
+        <h1>Woofy Finder</h1>
       </div>
-      <div style={{display: 'flex', justifyContent: 'center'}}>
-        <h2>Total Items: {filteredData.length}</h2>
-      </div>
-      <div style={{display: 'flex', justifyContent: 'center'}}>
-        <label htmlFor="traitType">Filter by Trait Type:</label>
+      <div style={{display: 'flex', justifyContent: 'center', gap: '10px'}}>
         <select
           id="traitType"
           value={selectedTraitType}
           onChange={handleTraitTypeChange}
+          style={dropdownStyle}
         >
           <option value="">Select a trait type</option>
           {uniqueTraitTypes.map((traitType, index) => (
@@ -183385,14 +183392,12 @@ const Home = () => {
             </option>
           ))}
         </select>
-      </div>
 
-      <div style={{display: 'flex', justifyContent: 'center'}}>
-        <label htmlFor="traitValue">Filter by Trait Value:</label>
         <select
           id="traitValue"
           value={selectedTraitValue}
           onChange={handleTraitValueChange}
+          style={dropdownStyle}
         >
           <option value="">Select a trait value</option>
           {uniqueTraitValues.map((traitValue, index) => (
@@ -183402,13 +183407,17 @@ const Home = () => {
           ))}
         </select>
       </div>
+      <div style={{textAlign: 'center', marginBottom: '20px', marginTop: '10px'}}>
+          <p><b>{filteredData.length}</b> shown</p>
+          <p><b>{ITEMS_PER_PAGE}</b> per page</p>
+      </div>
     <div style={{display: 'flex', justifyContent: 'center', flexDirection:'row', flexWrap: 'wrap', alignItems: 'top', gap: '20px'}}>
       {currentItems.map((item, index) => (
         <div key={index}>
           <div>
-            <h2>{item.name}</h2>
-            <img src={item.image} alt={item.name} width="200" />
-            <ul>
+            <h2 style={{textAlign: 'center'}}>{item.name}</h2>
+            <img style={{borderRadius: '10px'}} src={item.image} alt={item.name} width="200" />
+            <ul style={{listStyleType: 'none'}}>
               {item.attributes.map((attribute, attrIndex) => (
                 <li key={attrIndex}>
                   <strong>{attribute.trait_type}:</strong> {attribute.value}
@@ -183424,7 +183433,7 @@ const Home = () => {
       {filteredData.length > ITEMS_PER_PAGE && (
         <div style={{display: 'flex', justifyContent: 'center', width: '100%', gap: '5px', marginTop: '30px', marginBottom: '30px', flexWrap: 'wrap'}}>
           {Array.from({ length: Math.ceil(filteredData.length / ITEMS_PER_PAGE) }, (_, i) => (
-              <button style={{width: '50px', height: '50px', fontSize: '20px'}} key={i} onClick={() => paginate(i + 1)}>{i + 1}</button>
+              <button disabled={i === currentPage - 1} style={{width: '50px', height: '50px', fontSize: '20px'}} key={i} onClick={() => paginate(i + 1)}>{i + 1}</button>
           ))}
         </div>
       )}
