@@ -176,10 +176,26 @@ const Home = () => {
     const traitValue = event.target.value;
     setSelectedTraitCount(traitValue);
 
+
     if (traitValue !== '') {
-      const filtered = filteredData.filter((item) =>
-        item.attributes.length - 1 === parseInt(traitValue)
-      );
+      let filtered = []
+      if (selectedTraitValue !== '') {
+        filtered = JSONData.filter((item) =>
+          item.attributes.some(
+            (attr) =>
+              attr.trait_type === selectedTraitType && attr.value === selectedTraitValue
+          )
+        )
+
+        filtered = filtered.filter((item) =>
+          item.attributes.length - 1 === parseInt(traitValue)
+        );
+      }
+      else {
+        filtered = JSONData.filter((item) =>
+          item.attributes.length - 1 === parseInt(traitValue)
+        );
+      }
       setFilteredData(filtered);
       setCurrentItems(filtered.slice(indexOfFirstItem, indexOfLastItem))
       setCurrentPage(1)
@@ -204,101 +220,97 @@ const Home = () => {
       mode: 'dark',
     },
   });
-  
+
 
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <>
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px', fontSize: '30px', fontWeight: 'bold', textAlign: 'center' }}>
-        <h1>Woofy Finder</h1>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-        <select
-          id="traitType"
-          value={selectedTraitType}
-          onChange={handleTraitTypeChange}
-          style={dropdownStyle}
-          disabled={loading}
-        >
-          <option value="">Select a trait type</option>
-          {uniqueTraitTypes.map((traitType, index) => (
-            <option key={index} value={traitType}>
-              {traitType}
-            </option>
-          ))}
-        </select>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px', fontSize: '30px', fontWeight: 'bold', textAlign: 'center' }}>
+          <h1>Woofy Finder</h1>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <select
+            id="traitType"
+            value={selectedTraitType}
+            onChange={handleTraitTypeChange}
+            style={dropdownStyle}
+            disabled={loading}
+          >
+            <option value="">Select a trait type</option>
+            {uniqueTraitTypes.map((traitType, index) => (
+              <option key={index} value={traitType}>
+                {traitType}
+              </option>
+            ))}
+          </select>
 
-        <select
-          id="traitValue"
-          value={selectedTraitValue}
-          onChange={handleTraitValueChange}
-          style={dropdownStyle}
-          disabled={loading}
-        >
-          <option value="">Select a trait value</option>
-          {uniqueTraitValues.map((traitValue, index) => (
-            <option key={index} value={traitValue}>
-              {traitValue}
-            </option>
-          ))}
-        </select>
+          <select
+            id="traitValue"
+            value={selectedTraitValue}
+            onChange={handleTraitValueChange}
+            style={dropdownStyle}
+            disabled={loading}
+          >
+            <option value="">Select a trait value</option>
+            {uniqueTraitValues.map((traitValue, index) => (
+              <option key={index} value={traitValue}>
+                {traitValue}
+              </option>
+            ))}
+          </select>
 
-        <select
-          id="traitCount"
-          value={selectedTraitCount}
-          onChange={handleTraitCountChange}
-          style={dropdownStyle}
-          disabled={loading}
-        >
+          <select
+            id="traitCount"
+            value={selectedTraitCount}
+            onChange={handleTraitCountChange}
+            style={dropdownStyle}
+            disabled={loading}
+          >
             <option value=""># of Traits</option>
-            <option value={2}>2</option>
             <option value={5}>5</option>
             <option value={6}>6</option>
             <option value={7}>7</option>
             <option value={8}>8</option>
             <option value={9}>9</option>
             <option value={10}>10</option>
-        </select>
-      </div>
-      <div style={{ textAlign: 'center', marginBottom: '20px', marginTop: '10px' }}>
-        <p><b>{filteredData.length}</b> shown</p>
-        <p><b>{filteredData.filter((a: any) => a.revealed === true).length}</b>/<b>{filteredData.length}</b> ({Math.floor((filteredData.filter((a: any) => a.revealed === true).length / filteredData.length) * 100)}%) revealed</p>
-        <p><b>{ITEMS_PER_PAGE}</b> per page</p>
-      </div>
-      {/* Pagination */}
-      <div>
-            {filteredData.length > ITEMS_PER_PAGE && (
-              <div style={{ display: 'flex', justifyContent: 'center', width: '100%', gap: '5px', marginTop: '30px', marginBottom: '30px', flexWrap: 'wrap' }}>
-                <Pagination onChange={handleChangePage} count={Math.ceil(filteredData.length / ITEMS_PER_PAGE)} variant="outlined" shape="rounded" />
-                {/* {Array.from({ length: Math.ceil(filteredData.length / ITEMS_PER_PAGE) }, (_, i) => (
-                  <button disabled={i === currentPage - 1} style={{ width: '50px', height: '50px', fontSize: '20px' }} key={i} onClick={() => paginate(i + 1)}>{i + 1}</button>
-                ))} */}
-              </div>
-            )}
-          </div>
-      {loading ? <Loader></Loader> :
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'top', gap: '20px' }}>
-            {currentItems.map((item, index) => (
-              <div key={index}>
-                <div>
-                  <h2 style={{ textAlign: 'center' }}>{item.name}</h2>
-                  <img className={styles.loadIn} src={item.image} alt={item.name} />
-                  <ul style={{ listStyleType: 'none' }}>
-                    {item.attributes.map((attribute, attrIndex) => (
-                      <li key={attrIndex} style={{fontSize: window.innerWidth < 600 ? '12px' : '14px'}}>
-                        <strong>{attribute.trait_type}:</strong> {attribute.value}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            ))}
-          </div>
+          </select>
         </div>
-      }
-    </>
+        <div style={{ textAlign: 'center', marginBottom: '20px', marginTop: '10px' }}>
+          <p><b>{filteredData.length}</b> shown</p>
+          <p><b>{filteredData.filter((a: any) => a.revealed === true).length}</b>/<b>{filteredData.length}</b> ({Math.floor((filteredData.filter((a: any) => a.revealed === true).length / filteredData.length) * 100)}%) revealed</p>
+          <p><b>{ITEMS_PER_PAGE}</b> per page</p>
+        </div>
+        {/* Pagination */}
+        <div>
+          {filteredData.length > ITEMS_PER_PAGE && (
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%', gap: '5px', marginTop: '30px', marginBottom: '30px', flexWrap: 'wrap' }}>
+              <Pagination onChange={handleChangePage} count={Math.ceil(filteredData.length / ITEMS_PER_PAGE)} variant="outlined" shape="rounded" />
+            </div>
+          )}
+        </div>
+        {loading ? <Loader></Loader> :
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'top', gap: '20px' }}>
+              {currentItems.map((item, index) => (
+                <div key={index}>
+                  <div>
+                    <h2 style={{ textAlign: 'center' }}>{item.name}</h2>
+                    <img className={styles.loadIn} src={item.image} alt={item.name} />
+                    <ul style={{ listStyleType: 'none' }}>
+                      {item.attributes.map((attribute, attrIndex) => (
+                        <li key={attrIndex} style={{ fontSize: window.innerWidth < 600 ? '12px' : '14px' }}>
+                          <strong>{attribute.trait_type}:</strong> {attribute.value}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        }
+      </>
     </ThemeProvider>
   );
 };
