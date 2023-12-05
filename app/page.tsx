@@ -75,8 +75,14 @@ const Home = () => {
       for(var i of ret) {
         if(i[0] === 0) {
           newJsonData[i[1]-1]?.attributes.push({trait_type: 'Reveal Status', value: 'Not Revealed'})
+          if(newJsonData[i[1]-1]) {
+            newJsonData[i[1]-1]["revealed"] = false
+          }
         } else {
           newJsonData[i[1]-1]?.attributes.push({trait_type: 'Reveal Status', value: 'Revealed'})
+          if(newJsonData[i[1]-1]) {
+            newJsonData[i[1]-1]["revealed"] = true
+          }
         }
       }
       console.log(newJsonData)
@@ -191,6 +197,7 @@ const Home = () => {
       </div>
       <div style={{ textAlign: 'center', marginBottom: '20px', marginTop: '10px' }}>
         <p><b>{filteredData.length}</b> shown</p>
+        <p><b>{filteredData.filter((a:any) => a.revealed === true).length}</b>/<b>{filteredData.length}</b> ({Math.floor((filteredData.filter((a:any) => a.revealed === true).length / filteredData.length) * 100)}%) revealed</p>
         <p><b>{ITEMS_PER_PAGE}</b> per page</p>
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'top', gap: '20px' }}>
