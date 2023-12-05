@@ -11,6 +11,23 @@
   color: red;
 }
 
+.loadIn {
+  animation: fade-in 3s;
+  border-radius: 10px;
+  max-width: 200px;
+  max-height: 200px;
+  background-color: 'gray';
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 100;
+  }
+}
+
 .description {
   display: inherit;
   justify-content: inherit;

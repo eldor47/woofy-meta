@@ -2,12 +2,16 @@
 'use client'
 import { useEffect, useState } from 'react';
 const { ethers } = require("ethers");
+import Loader from './Loader';
 import woofyAbi from "./api/woofyabi.json"
 import woofyMeta from "./api/woofymeta.json"
+import styles from "./page.module.css"
+
 
 const Home = () => {
-  const [JSONData, setJSONData ] = useState(woofyMeta)
+  const [JSONData, setJSONData] = useState(woofyMeta)
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
   const ITEMS_PER_PAGE = 50
 
   const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
@@ -45,6 +49,7 @@ const Home = () => {
 
   useEffect(() => {
     async function fetch() {
+      setLoading(true)
       const chainId = 43114; // Avalanche C-Chain chain ID
       const AVAX_PROVIDER = new ethers.providers.JsonRpcProvider('https://api.avax.network/ext/bc/C/rpc', { chainId });
       // Check network information
@@ -53,7 +58,7 @@ const Home = () => {
       const AVAX_MULTICALL_CONTRACT = new ethers.Contract('0xcA11bde05977b3631167028862bE2a173976CA11', [
         `function tryAggregate(bool requireSuccess, tuple(address target, bytes data)[] memory calls) returns (tuple(bool success, bytes data)[] memory returnData)`,
       ], AVAX_PROVIDER);
-    
+
       let ret: number[][] = [];
       const n = 1000;
       const target = AVAX_WOOFY_CONTRACT.address;
@@ -63,7 +68,7 @@ const Home = () => {
         let res = await AVAX_MULTICALL_CONTRACT.callStatic.tryAggregate(false, ranks.map(x => {
           return { target, data: `0xf0342988${x.toString(16).padStart(64, '0')}` }; // metadataIdToTokenId(uint256)
         }));
-        res.forEach(({ success, data }:any, i:any) => {
+        res.forEach(({ success, data }: any, i: any) => {
           if (success) {
             ret.push([parseInt(data), ranks[i]]);
           }
@@ -72,16 +77,16 @@ const Home = () => {
 
 
       var newJsonData = [...JSONData] as any
-      for(var i of ret) {
-        if(i[0] === 0) {
-          newJsonData[i[1]-1]?.attributes.push({trait_type: 'Reveal Status', value: 'Not Revealed'})
-          if(newJsonData[i[1]-1]) {
-            newJsonData[i[1]-1]["revealed"] = false
+      for (var i of ret) {
+        if (i[0] === 0) {
+          newJsonData[i[1] - 1]?.attributes.push({ trait_type: 'Reveal Status', value: 'Not Revealed' })
+          if (newJsonData[i[1] - 1]) {
+            newJsonData[i[1] - 1]["revealed"] = false
           }
         } else {
-          newJsonData[i[1]-1]?.attributes.push({trait_type: 'Reveal Status', value: 'Revealed'})
-          if(newJsonData[i[1]-1]) {
-            newJsonData[i[1]-1]["revealed"] = true
+          newJsonData[i[1] - 1]?.attributes.push({ trait_type: 'Reveal Status', value: 'Revealed' })
+          if (newJsonData[i[1] - 1]) {
+            newJsonData[i[1] - 1]["revealed"] = true
           }
         }
       }
@@ -96,7 +101,7 @@ const Home = () => {
           )
         )
       );
-    
+
       uniqueTraitValues = Array.from(
         new Set(
           newJsonData.flatMap((item: { attributes: any[]; }) =>
@@ -108,7 +113,9 @@ const Home = () => {
       );
       setCurrentPage(1)
     }
-    fetch()
+    fetch().then(data => {
+      setLoading(false)
+    })
 
   }, [])
 
@@ -162,7 +169,7 @@ const Home = () => {
   }
 
   return (
-    <div>
+    <>
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px', fontSize: '30px', fontWeight: 'bold' }}>
         <h1>Woofy Finder</h1>
       </div>
@@ -172,6 +179,7 @@ const Home = () => {
           value={selectedTraitType}
           onChange={handleTraitTypeChange}
           style={dropdownStyle}
+          disabled={loading}
         >
           <option value="">Select a trait type</option>
           {uniqueTraitTypes.map((traitType, index) => (
@@ -186,6 +194,7 @@ const Home = () => {
           value={selectedTraitValue}
           onChange={handleTraitValueChange}
           style={dropdownStyle}
+          disabled={loading}
         >
           <option value="">Select a trait value</option>
           {uniqueTraitValues.map((traitValue, index) => (
@@ -197,37 +206,41 @@ const Home = () => {
       </div>
       <div style={{ textAlign: 'center', marginBottom: '20px', marginTop: '10px' }}>
         <p><b>{filteredData.length}</b> shown</p>
-        <p><b>{filteredData.filter((a:any) => a.revealed === true).length}</b>/<b>{filteredData.length}</b> ({Math.floor((filteredData.filter((a:any) => a.revealed === true).length / filteredData.length) * 100)}%) revealed</p>
+        <p><b>{filteredData.filter((a: any) => a.revealed === true).length}</b>/<b>{filteredData.length}</b> ({Math.floor((filteredData.filter((a: any) => a.revealed === true).length / filteredData.length) * 100)}%) revealed</p>
         <p><b>{ITEMS_PER_PAGE}</b> per page</p>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'top', gap: '20px' }}>
-        {currentItems.map((item, index) => (
-          <div key={index}>
-            <div>
-              <h2 style={{ textAlign: 'center' }}>{item.name}</h2>
-              <img style={{ borderRadius: '10px' }} src={item.image} alt={item.name} width="200" />
-              <ul style={{ listStyleType: 'none' }}>
-                {item.attributes.map((attribute, attrIndex) => (
-                  <li key={attrIndex}>
-                    <strong>{attribute.trait_type}:</strong> {attribute.value}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        ))}
-      </div>
-      {/* Pagination */}
-      <div>
-        {filteredData.length > ITEMS_PER_PAGE && (
-          <div style={{ display: 'flex', justifyContent: 'center', width: '100%', gap: '5px', marginTop: '30px', marginBottom: '30px', flexWrap: 'wrap' }}>
-            {Array.from({ length: Math.ceil(filteredData.length / ITEMS_PER_PAGE) }, (_, i) => (
-              <button disabled={i === currentPage - 1} style={{ width: '50px', height: '50px', fontSize: '20px' }} key={i} onClick={() => paginate(i + 1)}>{i + 1}</button>
+      {loading ? <Loader></Loader> :
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'top', gap: '20px' }}>
+            {currentItems.map((item, index) => (
+              <div key={index}>
+                <div>
+                  <h2 style={{ textAlign: 'center' }}>{item.name}</h2>
+                  <img className={styles.loadIn} src={item.image} alt={item.name} />
+                  <ul style={{ listStyleType: 'none' }}>
+                    {item.attributes.map((attribute, attrIndex) => (
+                      <li key={attrIndex}>
+                        <strong>{attribute.trait_type}:</strong> {attribute.value}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             ))}
           </div>
-        )}
-      </div>
-    </div>
+          {/* Pagination */}
+          <div>
+            {filteredData.length > ITEMS_PER_PAGE && (
+              <div style={{ display: 'flex', justifyContent: 'center', width: '100%', gap: '5px', marginTop: '30px', marginBottom: '30px', flexWrap: 'wrap' }}>
+                {Array.from({ length: Math.ceil(filteredData.length / ITEMS_PER_PAGE) }, (_, i) => (
+                  <button disabled={i === currentPage - 1} style={{ width: '50px', height: '50px', fontSize: '20px' }} key={i} onClick={() => paginate(i + 1)}>{i + 1}</button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      }
+    </>
   );
 };
 
