@@ -25,9 +25,11 @@ import ListItemText from '@mui/material/ListItemText';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
 import MailIcon from '@mui/icons-material/Mail';
 import Select, { StylesConfig } from 'react-select'
-import { Button, Card, CardActionArea, CardActions, CardContent, CardMedia, Pagination, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Button, Card, CardActionArea, CardActions, CardContent, CardMedia, Pagination, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { fetchRevealStatus, fetchWallets } from './api/contract';
-import { SearchOffOutlined, SearchOutlined } from '@mui/icons-material';
+import useWindowSize from './hooks/windowSize'
+import { ExpandMoreOutlined, ImageOutlined, ImageRounded, SearchOutlined, Visibility, VisibilityOff, VisibilityOffOutlined, VisibilityOutlined, WalletRounded } from '@mui/icons-material';
+import Wallet from './components/wallet';
 
 
 const drawerWidth = 300;
@@ -89,7 +91,17 @@ const Home = () => {
   const [wallets, setWallets] = useState([])
   const ITEMS_PER_PAGE = 50
   const theme = useTheme();
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [metaShown, setMetaShown] = useState(false);
+  const [walletShown, setWalletShown] = useState(false)
+
+  const showWalletView = () => {
+    setWalletShown(true)
+  }
+
+  const toggleMeta = () => {
+    setMetaShown(!metaShown)
+  }
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -113,8 +125,22 @@ const Home = () => {
   };
 
   const [selectedTraitType, setSelectedTraitType] = useState('');
-  const [selectedTraitValue, setSelectedTraitValue] = useState('');
-  const [selectedTraitCount, setSelectedTraitCount] = useState('');
+  const [selectedTraitValues, setSelectedTraitValues] = useState({
+    "Pack": [],
+    "Pack Leader": [],
+    "Revealed": [],
+    "Background": [],
+    "Body": [],
+    "Eyes": [],
+    "Mouth": [],
+    "Hat": [],
+    "Top": [],
+    "Background Detail": [],
+    "Eyewear": [],
+    "Accessory": []
+  });
+  const [selectedTraitCount, setSelectedTraitCount] = useState(null);
+  const size = useWindowSize();
   const [filteredData, setFilteredData] = useState(JSONData);
   const [currentItems, setCurrentItems] = useState(filteredData.slice(indexOfFirstItem, indexOfLastItem));
 
@@ -135,6 +161,18 @@ const Home = () => {
       ).sort()
     )
   ).map(a => { return { label: a, value: a } });
+
+  const getTraitValues = (traitType:any) => {
+    return Array.from(
+      new Set(
+        JSONData.flatMap((item) =>
+          item.attributes
+            .filter((attribute) => attribute.trait_type === traitType)
+            .map((attribute) => attribute.value)
+        ).sort()
+      )
+    ).map(a => { return { label: a, value: a } });
+  }
 
   useEffect(() => {
     setCurrentItems(filteredData.slice(indexOfFirstItem, indexOfLastItem))
@@ -173,82 +211,90 @@ const Home = () => {
 
   }, [])
 
-  const handleTraitTypeChange = (event: any) => {
-    const traitType = event ? event.label : '';
-    setSelectedTraitType(traitType);
-    setSelectedTraitValue('');
-    setSelectedTraitCount('');
+  const handleTraitValueChange = (label:string, event: any) => {
+    // const traitValues = event.map(a => a.label);
+    // setSelectedTraitValue(traitValues);
+    // setSelectedTraitCount('');
+    let newSelectedTraitValues = selectedTraitValues;
+    newSelectedTraitValues[label] = event.map(a => a.label)
 
-    if (traitType !== '') {
-      const filtered = JSONData.filter((item) =>
-        item.attributes.some((attr) => attr.trait_type === traitType)
-      );
-    } else {
-      setFilteredData(JSONData);
-      setCurrentItems(JSONData.slice(indexOfFirstItem, indexOfLastItem))
-      setCurrentPage(1)
-    }
+    const traitCountJSON = selectedTraitCount ? JSONData.filter((item) =>
+      item.attributes.length - 1 === parseInt(selectedTraitCount)
+    ) : JSONData
+
+    const filtered = traitCountJSON.filter((item) => {
+      return Object.entries(newSelectedTraitValues).every(([traitType, selectedValues]) => {
+        const attribute = item.attributes.find((attr) => attr.trait_type === traitType);
+        if (!attribute) {
+          return selectedValues.length === 0; // If the attribute doesn't exist, only allow if no specific values are selected
+        }
+        return (
+          selectedValues.length === 0 || selectedValues.includes(attribute.value)
+        );
+      });
+    });
+    setSelectedTraitValues(newSelectedTraitValues)
+    setFilteredData(filtered);
+    setCurrentItems(filtered.slice(indexOfFirstItem, indexOfLastItem))
+    setCurrentPage(1)
+
+    // if (event.length > 0) {
+    // }
+    // } else {
+    //   setFilteredData(JSONData);
+    //   setCurrentItems(JSONData.slice(indexOfFirstItem, indexOfLastItem))
+    //   setCurrentPage(1)
+    // }
   };
 
-  const handleTraitValueChange = (event: any) => {
-    const traitValues = event.map(a => a.label);
-    setSelectedTraitValue(traitValues);
-    setSelectedTraitCount('');
-
-    if (traitValues) {
-      const filtered = JSONData.filter((item) =>
-        item.attributes.some(
-          (attr) =>
-            attr.trait_type === selectedTraitType && traitValues.includes(attr.value)
-        )
-      );
-      setFilteredData(filtered);
-      setCurrentItems(filtered.slice(indexOfFirstItem, indexOfLastItem))
-      setCurrentPage(1)
-    } else {
+  const handleTraitCountChange = (event: any) => {
+    if(!event) {
       setFilteredData(JSONData);
       setCurrentItems(JSONData.slice(indexOfFirstItem, indexOfLastItem))
-      setCurrentPage(1)
+      setSelectedTraitValues({
+        "Pack": [],
+        "Pack Leader": [],
+        "Revealed": [],
+        "Background": [],
+        "Body": [],
+        "Eyes": [],
+        "Mouth": [],
+        "Hat": [],
+        "Top": [],
+        "Background Detail": [],
+        "Eyewear": [],
+        "Accessory": []
+      })
+      setSelectedTraitCount(null);
+      return
     }
-  };
 
-  const handleTraitCountChange = (event: { target: { value: any; }; }) => {
-    const traitValue = event.target.value;
+    const traitValue = event.value;
     setSelectedTraitCount(traitValue);
-
-
-    if (traitValue !== '') {
-      let filtered = []
-      if (selectedTraitValue !== '') {
-        filtered = JSONData.filter((item) =>
-          item.attributes.some(
-            (attr) =>
-              attr.trait_type === selectedTraitType && attr.value === selectedTraitValue
-          )
-        )
-
-        filtered = filtered.filter((item) =>
-          item.attributes.length - 1 === parseInt(traitValue)
-        );
-      }
-      else {
-        filtered = JSONData.filter((item) =>
-          item.attributes.length - 1 === parseInt(traitValue)
-        );
-      }
-      setFilteredData(filtered);
-      setCurrentItems(filtered.slice(indexOfFirstItem, indexOfLastItem))
-      setCurrentPage(1)
-    } else {
-      setFilteredData(JSONData);
-      setCurrentItems(JSONData.slice(indexOfFirstItem, indexOfLastItem))
-      setCurrentPage(1)
-    }
+    const filtered = JSONData.filter((item) =>
+      item.attributes.length - 1 === traitValue
+    );
+    setFilteredData(filtered);
+    setCurrentItems(filtered.slice(indexOfFirstItem, indexOfLastItem))
+    setSelectedTraitValues({
+      "Pack": [],
+      "Pack Leader": [],
+      "Revealed": [],
+      "Background": [],
+      "Body": [],
+      "Eyes": [],
+      "Mouth": [],
+      "Hat": [],
+      "Top": [],
+      "Background Detail": [],
+      "Eyewear": [],
+      "Accessory": []
+    })
   };
 
-  const handleHyperClick = (item:any) => {
-    if(item.tokenId === 0) {
-      window.open('https://avax.hyperspace.xyz/collection/avax/5ad14893-3f7e-4be2-9205-d2122591c9f2','_blank');
+  const handleHyperClick = (item: any) => {
+    if (item.tokenId === 0) {
+      window.open('https://avax.hyperspace.xyz/collection/avax/5ad14893-3f7e-4be2-9205-d2122591c9f2', '_blank');
     }
     window.open('https://avax.hyperspace.xyz/collection/avax/5ad14893-3f7e-4be2-9205-d2122591c9f2?tokenAddress=0xbacd77ac0c456798e05de15999cb212129d90b70_' + item.tokenId, '_blank');
   }
@@ -275,37 +321,53 @@ const Home = () => {
     },
   });
 
+  useEffect(() => {
+    if (size.width < 600) {
+      setOpen(false)
+    } else {
+      setOpen(true)
+    }
+  }, [size.width])
+
+  const traitOptions = [
+    { value: 5, label: '5' },
+    { value: 6, label: '6' },
+    { value: 7, label: '7' },
+    { value: 8, label: '8' },
+    { value: 9, label: '9' },
+    { value: 10, label: '10' },
+  ]
 
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <Box sx={{ display: 'flex' }}>
-        <AppBar position="fixed" open={open} style={{display: open && window.innerWidth < 600 ? 'none' : 'block'}}>
+        <AppBar position="fixed" open={open} style={{ display: (open && size.width < 600 ? 'none' : 'block') }}>
           <Toolbar hidden={open}>
-              <Box display='flex' flexGrow={1} alignItems={'center'}>
-                  {/* whatever is on the left side */}
-                  <IconButton
-                    color="inherit"
-                    aria-label="open drawer"
-                    onClick={handleDrawerOpen}
-                    edge="start"
-                    sx={{ mr: 2, ...(open && { display: 'none' }) }}
-                  >
-                    <MenuIcon />
-                  </IconButton>
-                  <Typography variant="h6" noWrap component="div">
-                    Woofy <SearchOutlined></SearchOutlined>
-                  </Typography>
-              </Box>
-              {/* whatever is on the right side */}
-              <Box display='flex' flexDirection='column'>
-                <Typography variant="caption" display="block">
-                  Reveal Status: {filteredData.filter((a: any) => a.revealed === true).length}/{filteredData.length} ({Math.ceil((filteredData.filter((a: any) => a.revealed === true).length / filteredData.length) * 100)}%)
-                </Typography>
-                <Typography variant="caption" display="block">
-                  NFTS Queried: {filteredData.length}
-                </Typography>
-              </Box>
+            <Box display='flex' flexGrow={1} alignItems={'center'}>
+              {/* whatever is on the left side */}
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                onClick={handleDrawerOpen}
+                edge="start"
+                sx={{ mr: 2, ...(open && { display: 'none' }) }}
+              >
+                <MenuIcon />
+              </IconButton>
+              <Typography variant="h6" noWrap component="div">
+                Woofy <SearchOutlined></SearchOutlined>
+              </Typography>
+            </Box>
+            {/* whatever is on the right side */}
+            <Box display='flex' flexDirection='column'>
+              <Typography variant="caption" display="block">
+                Reveal Status: {filteredData.filter((a: any) => a.revealed === true).length}/{filteredData.length} ({Math.ceil((filteredData.filter((a: any) => a.revealed === true).length / filteredData.length) * 100)}%)
+              </Typography>
+              <Typography variant="caption" display="block">
+                Woofys Queried: {filteredData.length}
+              </Typography>
+            </Box>
           </Toolbar>
         </AppBar>
         <Drawer
@@ -315,7 +377,8 @@ const Home = () => {
             '& .MuiDrawer-paper': {
               width: drawerWidth,
               boxSizing: 'border-box',
-            },
+              scrollbarWidth: 'thin'
+            }
           }}
           variant="persistent"
           anchor="left"
@@ -326,194 +389,169 @@ const Home = () => {
               {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
             </IconButton>
           </DrawerHeader>
-          <Divider />
-          <List style={{ padding: '20px' }}>
-            <Select
-              onChange={handleTraitTypeChange}
-              options={uniqueTraitTypes}
-              styles={dropdownStyle}
-              isClearable
-              theme={(theme) => ({
-                ...theme,
-                borderRadius: 0,
-                colors: {
-                  ...theme.colors,
-                  primary25: 'darkgray',
-                  primary: 'gray',
-                },
-              })}
-            />
-            <Select
-              closeMenuOnSelect={false}
-              isMulti
-              onChange={handleTraitValueChange}
-              options={uniqueTraitValues}
-              styles={dropdownStyle}
-              theme={(theme) => ({
-                ...theme,
-                borderRadius: 0,
-                colors: {
-                  ...theme.colors,
-                  primary25: 'darkgray',
-                  primary: 'gray',
-                },
-              })}
-            />
-            {/* <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}> */}
-            {/* <select
-              id="traitType"
-              value={selectedTraitType}
-              onChange={handleTraitTypeChange}
-              style={dropdownStyle}
-              disabled={loading}
-            >
-              <option value="">Select a trait type</option>
-              {uniqueTraitTypes.map((traitType, index) => (
-                <option key={index} value={traitType}>
-                  {traitType}
-                </option>
-              ))}
-            </select>
-
-            <select
-              id="traitValue"
-              value={selectedTraitValue}
-              onChange={handleTraitValueChange}
-              style={dropdownStyle}
-              disabled={loading}
-            >
-              <option value="">Select a trait value</option>
-              {uniqueTraitValues.map((traitValue, index) => (
-                <option key={index} value={traitValue}>
-                  {traitValue}
-                </option>
-              ))}
-            </select>
-
-            <select
-              id="traitCount"
-              value={selectedTraitCount}
-              onChange={handleTraitCountChange}
-              style={dropdownStyle}
-              disabled={loading}
-            >
-              <option value=""># of Traits</option>
-              <option value={5}>5</option>
-              <option value={6}>6</option>
-              <option value={7}>7</option>
-              <option value={8}>8</option>
-              <option value={9}>9</option>
-              <option value={10}>10</option>
-            </select> */}
-            {/* </div> */}
-          </List>
-          <Divider />
           <List>
-            {['All mail', 'Trash', 'Spam'].map((text, index) => (
-              <ListItem key={text} disablePadding>
+              <ListItem key={500} onClick={showWalletView} disablePadding>
                 <ListItemButton>
                   <ListItemIcon>
-                    {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
+                    <WalletRounded />
                   </ListItemIcon>
-                  <ListItemText primary={text} />
+                  <ListItemText primary={"Wallet Viewer"} />
                 </ListItemButton>
               </ListItem>
-            ))}
+              <ListItem key={501} onClick={() => setWalletShown(false)} disablePadding>
+                <ListItemButton>
+                  <ListItemIcon>
+                    <ImageRounded />
+                  </ListItemIcon>
+                  <ListItemText primary={"Woofy Viewer"} />
+                </ListItemButton>
+              </ListItem>
           </List>
+          <Divider />
+          <Accordion>
+          <AccordionSummary
+            expandIcon={<ExpandMoreOutlined />}
+            aria-controls="panel1a-content"
+            id="panel1a-header"
+          >
+            <Typography>Filters</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+          <List style={{ padding: '2px', gap: '10px' }}>
+            <Select
+              key={100090}
+              isClearable
+              closeMenuOnSelect={false}
+              onChange={handleTraitCountChange}
+              options={traitOptions}
+              styles={dropdownStyle}
+              placeholder={'Trait Count'}
+              theme={(theme) => ({
+                ...theme,
+                colors: {
+                  ...theme.colors,
+                  primary25: 'darkgray',
+                  primary: 'gray',
+                },
+              })}
+            />
+            {uniqueTraitTypes.map((a, index) => {
+              return <div key={index}>
+                <Select
+                  closeMenuOnSelect={false}
+                  isMulti
+                  isClearable
+                  placeholder={a.label}
+                  onChange={(e) => handleTraitValueChange(a.label, e)}
+                  options={getTraitValues(a.label)}
+                  styles={dropdownStyle}
+                  theme={(theme) => ({
+                    ...theme,
+                    colors: {
+                      ...theme.colors,
+                      primary25: 'darkgray',
+                      primary: 'gray',
+                    },
+                  })}
+                />
+              </div>
+            })}
+          </List>
+          </AccordionDetails>
+        </Accordion>
+          <Divider />
         </Drawer>
-        <Main open={open} style={{padding: 0, paddingTop: '20px', paddingBottom: '20px', height: '100vh'}}>
+        <Main open={open} style={{ padding: 0, paddingTop: '20px', paddingBottom: '20px', height: '100vh' }}>
           <DrawerHeader />
+          {walletShown ? <Wallet wallets={wallets}></Wallet> : <></>}
           {loading ? <Loader></Loader> :
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'top', gap: '15px', marginBottom: '50px' }}>
-                {currentItems.map((item:any, index) => (
+            <div style={{display: walletShown ? 'none' : 'inline'}}>
+              <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'top', gap: '15px', paddingBottom: '100px' }}>
+                {currentItems.map((item: any, index) => (
                   <div key={index}>
-                    <Card sx={{ width: window.innerWidth < 600 ? 180 : 250 }}>
+                    <Card sx={{ width: size.width < 600 ? 180 : 250 }}>
                       <CardActionArea onClick={() => handleHyperClick(item)}>
                         <CardMedia
                           component="img"
-                          height={window.innerWidth < 600 ? 180 : 250}
+                          height={size.width < 600 ? 180 : 250}
                           image={item.image}
                           alt={item.name}
                         />
                       </CardActionArea>
                       <CardContent>
-                          <Typography gutterBottom component="div">
+                        <Typography gutterBottom component="div">
                           <b>{item.name}</b> - {item.revealed ? `ID: ${item.tokenId}` : 'Unrevealed'}
-                          </Typography>
-                        </CardContent>
-                        <TableContainer component={Paper} sx={{height: '200px', overflow: 'auto', overflowX: 'hidden'}}>
-                          <Table size="small" aria-label="a dense table">
-                            <TableBody>
-                              {item.attributes.map((attribute, attrIndex) => (
-                                <TableRow
-                                  key={attrIndex}
-                                  sx={{ '&:last-child td, &:last-child th': { border: 0 }}}
-                                >
-                                  <TableCell sx={{
-                                      paddingLeft: '10px',
-                                      paddingRight: '5px',
-                                      paddingTop: '0px',
-                                      paddingBottom: '0px',
-                                      margin: '0',
-                                      fontSize: window.innerWidth < 600 ? '12px' : '14px' 
-                                    }}>
-                                    {attribute.trait_type}
-                                  </TableCell>
-                                  <TableCell sx={{
-                                      paddingLeft: '10px',
-                                      paddingRight: '5px',
-                                      paddingTop: '0px',
-                                      paddingBottom: '0px',
-                                      margin: '0', 
-                                      fontSize: window.innerWidth < 600 ? '12px' : '14px' 
-                                    }}>
+                        </Typography>
+                      </CardContent>
+                      <TableContainer hidden={metaShown} component={Paper} sx={{ overflow: 'auto', overflowX: 'hidden' }}>
+                        <Table size="small" aria-label="a dense table">
+                          <TableBody>
+                            {item.attributes.map((attribute, attrIndex) => (
+                              <TableRow
+                                key={attrIndex}
+                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                              >
+                                <TableCell sx={{
+                                  paddingLeft: '10px',
+                                  paddingRight: '5px',
+                                  paddingTop: '0px',
+                                  paddingBottom: '0px',
+                                  margin: '0',
+                                  fontSize: size.width < 600 ? '12px' : '14px'
+                                }}>
+                                  {attribute.trait_type}
+                                </TableCell>
+                                <TableCell sx={{
+                                  paddingLeft: '10px',
+                                  paddingRight: '5px',
+                                  paddingTop: '0px',
+                                  paddingBottom: '0px',
+                                  margin: '0',
+                                  fontSize: size.width < 600 ? '12px' : '14px'
+                                }}>
                                   {attribute.value}
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
                       {/* <CardActions>
                         <Button size="small" color="primary">
                           Download
                         </Button>
                       </CardActions> */}
                     </Card>
-                    {/* <div>
-                      <h2 style={{ textAlign: 'center' }}>{item.name}</h2>
-                      <img className={styles.loadIn} src={item.image} alt={item.name} />
-                      <ul style={{ listStyleType: 'none' }}>
-                        {item.attributes.map((attribute, attrIndex) => (
-                          <li key={attrIndex} style={{ fontSize: window.innerWidth < 600 ? '12px' : '14px' }}>
-                            <strong>{attribute.trait_type}:</strong> {attribute.value}
-                          </li>
-                        ))}
-                      </ul>
-                    </div> */}
                   </div>
                 ))}
               </div>
             </div>
           }
-          <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0, display: open && window.innerWidth < 600 ? 'none' : 'block' }}>
-            <div>
-              {filteredData.length > ITEMS_PER_PAGE && (
-                <Box style={
-                  {
-                    display: 'flex', justifyContent: 'center',
-                    gap: '5px',
-                    marginLeft: open ? drawerWidth / 2 : 0,
-                    marginTop: '10px',
-                    marginBottom: '10px',
-                    flexWrap: 'wrap'
-                  }}>
-                  <Pagination onChange={handleChangePage} count={Math.ceil(filteredData.length / ITEMS_PER_PAGE)} variant="outlined" shape="rounded" />
-                  
-                </Box>
-              )}
-            </div>
+          <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0, display: (open && size.width < 600 ? 'none' : 'block') }}>
+            {filteredData.length > ITEMS_PER_PAGE && (
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                flexDirection="row"
+                width={open ? size.width - drawerWidth : "100%"}
+                sx={{
+                  gap: '5px',
+                  marginLeft: open ? drawerWidth / 8 : 0,
+                  marginTop: '5px',
+                  marginBottom: '5px',
+                  paddingRight: '10px'
+                }}>
+                <Button onClick={toggleMeta}>{metaShown ? <VisibilityOffOutlined color="secondary" /> : <VisibilityOutlined color="secondary" />}</Button>
+                <Pagination onChange={handleChangePage}
+                  siblingCount={0}
+                  count={Math.ceil(filteredData.length / ITEMS_PER_PAGE)}
+                  variant="outlined" shape="rounded"
+                  size={size.width < 600 ? 'small' : 'medium'}
+                />
+                <Typography variant="caption" display="block" hidden={size.width < 600}>{ITEMS_PER_PAGE} per page</Typography>
+              </Box>
+            )}
           </AppBar>
         </Main>
       </Box>

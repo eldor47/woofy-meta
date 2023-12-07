@@ -29,13 +29,13 @@ export async function fetchRevealStatus(JSONData: any) {
     var newJsonData = [...JSONData] as any
     for (var i of ret) {
       if (i[0] === 0) {
-        newJsonData[i[1] - 1]?.attributes.push({ trait_type: 'Reveal Status', value: 'Not Revealed' })
+        newJsonData[i[1] - 1]?.attributes.push({ trait_type: 'Revealed', value: 'No' })
         if (newJsonData[i[1] - 1]) {
           newJsonData[i[1] - 1]["revealed"] = false
           newJsonData[i[1] - 1]["tokenId"] = i[0]
         }
       } else {
-        newJsonData[i[1] - 1]?.attributes.push({ trait_type: 'Reveal Status', value: 'Revealed' })
+        newJsonData[i[1] - 1]?.attributes.push({ trait_type: 'Revealed', value: 'Yes' })
         if (newJsonData[i[1] - 1]) {
           newJsonData[i[1] - 1]["revealed"] = true
           newJsonData[i[1] - 1]["tokenId"] = i[0]
@@ -43,7 +43,6 @@ export async function fetchRevealStatus(JSONData: any) {
       }
     }
     
-    console.log(newJsonData)
     return newJsonData
 }
 
