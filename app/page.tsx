@@ -25,11 +25,12 @@ import ListItemText from '@mui/material/ListItemText';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
 import MailIcon from '@mui/icons-material/Mail';
 import Select, { StylesConfig } from 'react-select'
-import { Accordion, AccordionDetails, AccordionSummary, Button, Card, CardActionArea, CardActions, CardContent, CardMedia, Pagination, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Button, Card, CardActionArea, CardActions, CardContent, CardMedia, ClickAwayListener, Pagination, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { fetchRevealStatus, fetchWallets } from './api/contract';
 import useWindowSize from './hooks/windowSize'
 import { ExpandMoreOutlined, ImageOutlined, ImageRounded, SearchOutlined, Visibility, VisibilityOff, VisibilityOffOutlined, VisibilityOutlined, WalletRounded } from '@mui/icons-material';
 import Wallet from './components/wallet';
+import Image from 'next/image'
 
 
 const drawerWidth = 300;
@@ -94,6 +95,7 @@ const Home = () => {
   const [open, setOpen] = useState(false);
   const [metaShown, setMetaShown] = useState(false);
   const [walletShown, setWalletShown] = useState(false)
+  const [mobileHyper, setMobileHyper] = useState(true);
 
   const showWalletView = () => {
     setWalletShown(true)
@@ -293,12 +295,20 @@ const Home = () => {
   };
 
   const handleHyperClick = (item: any) => {
+    if(!mobileHyper)
+      return
     if (item.tokenId === 0) {
       window.open('https://avax.hyperspace.xyz/collection/avax/5ad14893-3f7e-4be2-9205-d2122591c9f2', '_blank');
     }
     window.open('https://avax.hyperspace.xyz/collection/avax/5ad14893-3f7e-4be2-9205-d2122591c9f2?tokenAddress=0xbacd77ac0c456798e05de15999cb212129d90b70_' + item.tokenId, '_blank');
   }
-
+  
+  const handleTouchAway = (e: MouseEvent | TouchEvent) => {
+    e.preventDefault()
+    e.stopImmediatePropagation()
+    e.stopPropagation()
+    handleDrawerClose()
+  }
 
   const dropdownStyle = {
     option: provided => ({
@@ -370,6 +380,11 @@ const Home = () => {
             </Box>
           </Toolbar>
         </AppBar>
+        <ClickAwayListener
+          touchEvent="onTouchEnd"
+          mouseEvent={false}
+          onClickAway={(e) => {open && handleTouchAway(e)}}
+        >
         <Drawer
           sx={{
             width: drawerWidth,
@@ -461,6 +476,7 @@ const Home = () => {
         </Accordion>
           <Divider />
         </Drawer>
+        </ClickAwayListener>
         <Main open={open} style={{ padding: 0, paddingTop: '20px', paddingBottom: '20px', height: '100vh' }}>
           <DrawerHeader />
           {walletShown ? <Wallet wallets={wallets}></Wallet> : <></>}
@@ -471,12 +487,17 @@ const Home = () => {
                   <div key={index}>
                     <Card sx={{ width: size.width < 600 ? 180 : 250 }}>
                       <CardActionArea onClick={() => handleHyperClick(item)}>
-                        <CardMedia
-                          component="img"
-                          height={size.width < 600 ? 180 : 250}
-                          image={item.image}
-                          alt={item.name}
-                        />
+                        <CardMedia>
+                          <div style={{ position: 'relative', width: '100%', height: size.width < 600 ? 180 : 250 }}>
+                            <Image alt={item.name}
+                            width={size.width < 600 ? 180 : 250}
+                            height={size.width < 600 ? 180 : 250}
+                            sizes="(max-width: 180px) 100vw, (max-width: 250px) 50vw, 33vw"
+                            src={item.image}
+                            priority={true}
+                            />
+                          </div>
+                        </CardMedia>
                       </CardActionArea>
                       <CardContent>
                         <Typography gutterBottom component="div">
@@ -527,7 +548,7 @@ const Home = () => {
               </div>
             </div>
           }
-          <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0, display: (open && size.width < 600 ? 'none' : 'block') }}>
+          <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0, display: ((open && size.width < 600) || walletShown ? 'none' : 'block') }}>
             {filteredData.length > ITEMS_PER_PAGE && (
               <Box
                 display="flex"
@@ -543,7 +564,8 @@ const Home = () => {
                   paddingRight: '10px'
                 }}>
                 <Button onClick={toggleMeta}>{metaShown ? <VisibilityOffOutlined color="secondary" /> : <VisibilityOutlined color="secondary" />}</Button>
-                <Pagination onChange={handleChangePage}
+                <Pagination
+                  onChange={handleChangePage}
                   siblingCount={0}
                   count={Math.ceil(filteredData.length / ITEMS_PER_PAGE)}
                   variant="outlined" shape="rounded"

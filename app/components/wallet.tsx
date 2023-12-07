@@ -12,17 +12,18 @@ const Wallet = (props: any) => {
     }
 
     return (
-        <Box display="flex" alignItems="center" flexDirection={"column"} sx={{ width: "100%" }}>
-            <Typography textAlign={"center"} flex={1}>Wallet Distribution - More Stats Soon</Typography>
+        <Box display="flex" alignItems="center" flexDirection={"column"} sx={{ width: "100%", padding: '20px' }}>
+            <Typography textAlign={"center"} flex={1}>Wallet Distribution - Top 50</Typography>
             <List>
-                {props.wallets.map(a => {
+                {props.wallets.slice(0, 50).map(a => {
                     return <ListItem key={a.address} disablePadding onClick={() => handleClick(a.address)}>
                         <ListItemButton>
                             <ListItemIcon>
                                 <WalletRounded />
                             </ListItemIcon>
                             <ListItemText>
-                                {a.address + ' - ' + ((100 * a.ids.length) / 5555).toFixed(2) + '%'} - <b>{a.ids.length + ' Woofys Owned'}</b>
+                                <Typography gutterBottom component="div" fontSize={12}>{a.address}</Typography>
+                                <Typography gutterBottom component="div">{((100 * a.ids.length) / 5555).toFixed(2) + '%'} - <b>{a.ids.length + ' Woofys Owned'}</b></Typography>
                             </ListItemText>
                         </ListItemButton>
                     </ListItem>
