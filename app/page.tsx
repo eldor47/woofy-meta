@@ -32,7 +32,6 @@ import { ExpandMoreOutlined, ImageOutlined, ImageRounded, SearchOutlined, Visibi
 import Wallet from './components/wallet';
 import Image from 'next/image'
 
-
 const drawerWidth = 300;
 
 const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
