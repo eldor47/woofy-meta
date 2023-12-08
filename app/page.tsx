@@ -488,7 +488,9 @@ const Home = () => {
                       <CardActionArea onClick={() => handleHyperClick(item)}>
                         <CardMedia>
                           <div style={{ position: 'relative', width: '100%', height: size.width < 600 ? 180 : 250 }}>
-                            <Image alt={item.name}
+                            <Image
+                            unoptimized
+                            alt={item.name}
                             width={size.width < 600 ? 180 : 250}
                             height={size.width < 600 ? 180 : 250}
                             sizes="(max-width: 180px) 100vw, (max-width: 250px) 50vw, 33vw"
