@@ -1,7 +1,7 @@
 const { ethers } = require("ethers");
 
 const chainId = 43114; // Avalanche C-Chain chain ID
-const AVAX_PROVIDER = new ethers.providers.JsonRpcProvider('https://api.avax.network/ext/bc/C/rpc', { chainId });
+const AVAX_PROVIDER = new ethers.providers.JsonRpcProvider('https://responsive-radial-seed.avalanche-mainnet.quiknode.pro/e8cac8b24cf15f52e355fc8dbe86d0f235da7d4a/ext/bc/C/rpc/', { chainId });
 const AVAX_WOOFY_CONTRACT = new ethers.Contract('0xBaCD77aC0c456798e05de15999CB212129d90b70', woofyAbi, AVAX_PROVIDER)
 const AVAX_MULTICALL_CONTRACT = new ethers.Contract('0xcA11bde05977b3631167028862bE2a173976CA11', [
   `function tryAggregate(bool requireSuccess, tuple(address target, bytes data)[] memory calls) returns (tuple(bool success, bytes data)[] memory returnData)`,

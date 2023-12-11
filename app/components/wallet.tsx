@@ -13,9 +13,9 @@ const Wallet = (props: any) => {
 
     return (
         <Box display="flex" alignItems="center" flexDirection={"column"} sx={{ width: "100%", padding: '20px' }}>
-            <Typography textAlign={"center"} flex={1}>Wallet Distribution - Top 50</Typography>
+            <Typography textAlign={"center"} flex={1}>Wallet Distribution - Top 100</Typography>
             <List>
-                {props.wallets.slice(0, 50).map(a => {
+                {props.wallets.slice(0, 100).map((a, index) => {
                     return <ListItem key={a.address} disablePadding onClick={() => handleClick(a.address)}>
                         <ListItemButton>
                             <ListItemIcon>
@@ -23,7 +23,7 @@ const Wallet = (props: any) => {
                             </ListItemIcon>
                             <ListItemText>
                                 <Typography gutterBottom component="div" fontSize={12}>{a.address}</Typography>
-                                <Typography gutterBottom component="div">{((100 * a.ids.length) / 5555).toFixed(2) + '%'} - <b>{a.ids.length + ' Woofys Owned'}</b></Typography>
+                                <Typography gutterBottom component="div">#{index+1} - {((100 * a.ids.length) / 5555).toFixed(2) + '%'} - <b>{a.ids.length + ' Woofys Owned'}</b></Typography>
                             </ListItemText>
                         </ListItemButton>
                     </ListItem>
